@@ -1,0 +1,94 @@
+{
+  "tests": [
+    {
+      "name": "proj1",
+      "setup": "",
+      "run": "make test-proj1",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 3,
+      "points": 5
+    },
+    {
+      "name": "proj2",
+      "setup": "",
+      "run": "make test-proj2",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 5,
+      "points": 10
+    },
+    {
+      "name": "proj3",
+      "setup": "",
+      "run": "make test-proj3",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 20
+    },
+    {
+      "name": "proj4.1",
+      "setup": "",
+      "run": "make test-proj4-1",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 5,
+      "points": 10
+    },
+    {
+      "name": "proj4.2",
+      "setup": "",
+      "run": "make test-proj4-2",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 5,
+      "points": 10
+    },
+    {
+      "name": "proj5.1",
+      "setup": "",
+      "run": "make test-proj5-1",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 10
+    },
+    {
+      "name": "proj5.2",
+      "setup": "",
+      "run": "make test-proj5-2",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 5,
+      "points": 10
+    },
+    {
+      "name": "proj5.3",
+      "setup": "",
+      "run": "make test-proj5-3",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 5,
+      "points": 10
+    },
+    {
+      "name": "proj6",
+      "setup": "",
+      "run": "make proj6",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 5,
+      "points": 15
+    }
+  ]
+}
