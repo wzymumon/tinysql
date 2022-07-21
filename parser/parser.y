@@ -3819,6 +3819,16 @@ JoinTable:
          * }
          *
 	 */
+|	TableRef CrossOpt TableRef "ON" Expression
+	{
+		on := &ast.OnCondition{Expr: $5}
+		$$ = &ast.Join{Left: $1.(ast.ResultSetNode), Right: $3.(ast.ResultSetNode), Tp: ast.CrossJoin, On: on}
+	}
+|	TableRef JoinType OuterOpt "JOIN" TableRef "ON" Expression
+	{
+		on := &ast.OnCondition{Expr: $7}
+		$$ = &ast.Join{Left: $1.(ast.ResultSetNode), Right: $5.(ast.ResultSetNode), Tp: $2.(ast.JoinType), On: on}
+	}
 
 JoinType:
 	"LEFT"
