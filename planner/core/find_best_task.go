@@ -213,7 +213,46 @@ type candidatePath struct {
 func compareCandidates(lhs, rhs *candidatePath) int {
 	// Project 4-2: your code here
 	// TODO: implement the content according to the header comment.
+	//
+	columnSetResult := compareColumnSet(lhs.columnSet, rhs.columnSet)
+	scanResult := compareBool(lhs.isSingleScan, rhs.isSingleScan)
+	mastchResult := compareBool(lhs.isMatchProp, rhs.isMatchProp)
+	sum := columnSetResult + scanResult + mastchResult
+	if columnSetResult >= 0 && scanResult >= 0 && mastchResult >= 0 && sum > 0 {
+		// lhs is better than rhs
+		return 1
+	}
+	if columnSetResult <= 0 && scanResult <= 0 && mastchResult <= 0 && sum < 0 {
+		// lhs is worse than rhs
+		return -1
+	}
 	return 0
+}
+
+// compareColumnSet
+// -1 means that `l` is worse than `r`;
+// 0 means that `l` equals to `r`, or 'l' and 'r' are incomparable;
+// 1 means that `l` is better than `r`.
+func compareColumnSet(l, r *intsets.Sparse) int {
+	if l.Equals(r) {
+		return 0
+	} else if l.SubsetOf(r) {
+		return -1
+	} else if r.SubsetOf(l) {
+		return 1
+	}
+
+	return 0
+}
+
+func compareBool(l, r bool) int {
+	if l == r {
+		return 0
+	}
+	if !l {
+		return -1
+	}
+	return 1
 }
 
 func (ds *DataSource) getTableCandidate(path *util.AccessPath, prop *property.PhysicalProperty) *candidatePath {
@@ -277,7 +316,20 @@ func (ds *DataSource) skylinePruning(prop *property.PhysicalProperty) []*candida
 		// TODO: Here is the pruning phase. Will prune the access path which is must worse than others.
 		//       You'll need to implement the content in function `compareCandidates`.
 		//       And use it to prune unnecessary paths.
-		candidates = append(candidates, currentCandidate)
+		pruned := false
+		for i := len(candidates) - 1; i >= 0; i-- {
+			result := compareCandidates(candidates[i], currentCandidate)
+			if result == 1 {
+				pruned = true
+				// We can break here because the current candidate cannot prune others anymore.
+				break
+			} else if result == -1 {
+				candidates = append(candidates[:i], candidates[i+1:]...)
+			}
+		}
+		if !pruned {
+			candidates = append(candidates, currentCandidate)
+		}
 	}
 	return candidates
 }
