@@ -18,13 +18,14 @@ import (
 	"container/list"
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/pingcap-incubator/tinykv/proto/pkg/kvrpcpb"
-	"github.com/pingcap-incubator/tinykv/scheduler/client"
+	pd "github.com/pingcap-incubator/tinykv/scheduler/client"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/tidb/store/tikv/tikvrpc"
 	"github.com/pingcap/tidb/util/logutil"
 	"go.uber.org/zap"
-	"sync"
 )
 
 // ResolvedCacheSize is max number of cached txn status.
@@ -295,7 +296,11 @@ func (lr *LockResolver) getTxnStatus(bo *Backoffer, txnID uint64, primary []byte
 	var req *tikvrpc.Request
 	// build the request
 	// YOUR CODE HERE (proj6).
-	panic("YOUR CODE HERE")
+	req = tikvrpc.NewRequest(tikvrpc.CmdCheckTxnStatus, &kvrpcpb.CheckTxnStatusRequest{
+		PrimaryKey: primary,
+		LockTs:     txnID,
+		CurrentTs:  currentTS,
+	})
 	for {
 		loc, err := lr.store.GetRegionCache().LocateKey(bo, primary)
 		if err != nil {
@@ -323,7 +328,16 @@ func (lr *LockResolver) getTxnStatus(bo *Backoffer, txnID uint64, primary []byte
 
 		// Assign status with response
 		// YOUR CODE HERE (proj6).
-		panic("YOUR CODE HERE")
+		ckResp := resp.Resp.(*kvrpcpb.CheckTxnStatusResponse)
+		status.action = ckResp.Action
+		if ckResp.LockTtl > 0 {
+			status.ttl = ckResp.LockTtl
+		} else if ckResp.CommitVersion > 0 {
+			status.commitTS = ckResp.CommitVersion
+			lr.saveResolved(txnID, status)
+		} else if ckResp.LockTtl == 0 && ckResp.CommitVersion == 0 {
+			// rollback : do nothing
+		}
 		return status, nil
 	}
 
@@ -347,7 +361,13 @@ func (lr *LockResolver) resolveLock(bo *Backoffer, l *Lock, status TxnStatus, cl
 
 		// build the request
 		// YOUR CODE HERE (proj6).
-		panic("YOUR CODE HERE")
+		lreq := &kvrpcpb.ResolveLockRequest{
+			StartVersion: l.TxnID,
+		}
+		if status.IsCommitted() {
+			lreq.CommitVersion = status.CommitTS()
+		}
+		req = tikvrpc.NewRequest(tikvrpc.CmdResolveLock, lreq)
 
 		resp, err := lr.store.SendReq(bo, req, loc.Region, readTimeoutShort)
 		if err != nil {
