@@ -366,7 +366,35 @@ func (p *LogicalProjection) PredicatePushDown(predicates []expression.Expression
 // Hints:
 //   1. predicates need to be discussed in two types: expression.Constant and expression.ScalarFunction
 func (la *LogicalAggregation) PredicatePushDown(predicates []expression.Expression) (ret []expression.Expression, retPlan LogicalPlan) {
-	return predicates, la
+	canBePushed := make([]expression.Expression, 0, len(predicates))
+	canNotBePushed := make([]expression.Expression, 0, len(predicates))
+	for _, expr := range la.GroupByItems {
+		if expression.HasAssignSetVarFunc(expr) {
+			_, child := la.baseLogicalPlan.PredicatePushDown(nil)
+			return predicates, child
+		}
+	}
+	columnsIncluded := make([]*expression.Column, 0, 10)
+	// iterate through list `predicates`
+	for _, cond := range predicates {
+		// A condition can be pushed down if all columns of the condition are present in groupByCols.
+		cols := expression.ExtractColumns(cond)
+		for _, col := range cols {
+			for _, eachItem := range la.GetGroupByCols() {
+				if eachItem.Equal(la.SCtx(), col) {
+					columnsIncluded = append(columnsIncluded, col)
+				}
+			}
+		}
+		if len(columnsIncluded) == len(cols) {
+			canBePushed = append(canBePushed, cond)
+		} else {
+			canNotBePushed = append(canNotBePushed, cond)
+		}
+		columnsIncluded = columnsIncluded[:0]
+	}
+	remained, child := la.baseLogicalPlan.PredicatePushDown(canBePushed)
+	return append(remained, canNotBePushed...), child
 }
 
 // PredicatePushDown implements LogicalPlan PredicatePushDown interface.
